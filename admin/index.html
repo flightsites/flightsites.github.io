@@ -264,7 +264,7 @@ function render() {
   });
   const best = Math.max(...rows.map(r => r.s ? r.r / r.s : 0));
   const label = { A: 'A · Pitch image', B: 'B · Template image', C: 'C · No image' };
-  $('abc').innerHTML = `<tr><th>Variant</th><th class="num">Queued</th><th class="num">Sent</th><th class="num hide-sm">Opened</th><th class="num">Replied</th><th class="num">Reply rate</th><th class="num">Booked</th></tr>` +
+  $('abc').innerHTML = `<tr><th>Variant</th><th class="num">Queued</th><th class="num">Delivered</th><th class="num hide-sm">Opened</th><th class="num">Replied</th><th class="num">Reply rate</th><th class="num">Booked</th></tr>` +
     rows.map(r => `<tr><td>${label[r.v]}</td><td class="num">${r.q}</td><td class="num">${r.s}</td><td class="num hide-sm">${pct(r.o, r.s)}</td><td class="num">${r.r}</td><td class="num ${r.s && best && r.r / r.s === best ? 'best' : ''}">${pct(r.r, r.s)}</td><td class="num">${r.b}</td></tr>`).join('');
 
   // Stripe
