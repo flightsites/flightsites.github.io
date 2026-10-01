@@ -208,7 +208,7 @@ async function signIn(e) {
   } catch (err) {
     PW = ''; try { sessionStorage.removeItem('fs_pw'); } catch {}
     $('login').classList.remove('hidden'); $('app').classList.add('hidden');
-    $('loginErr').textContent = MSG[err.message] || 'Could not connect. Try again.';
+    $('loginErr').textContent = MSG[err.message] || (err.message && !/fetch|network|json/i.test(err.message) ? 'Backend error: ' + err.message : 'Could not connect. Try again.');
   }
   $('loginBtn').disabled = false;
 }
