@@ -76,6 +76,29 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .note{color:var(--ink3);font-size:13px;margin-top:10px}
 td select{height:30px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:0 6px;font-size:13px}
 .stripe-off{padding:22px 20px;color:var(--ink2)}
+/* Upcoming calls */
+.when-col{min-width:92px;text-align:center;flex:none}
+.when-col .d{font-size:12px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.03em}
+.when-col .t{font-size:17px;font-weight:700;letter-spacing:-.02em}
+/* Accounts */
+.accts{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:start}
+.acct .meta{color:var(--ink2);font-size:13px;overflow-wrap:anywhere}
+.acct{background:var(--card);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.acct .hd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.acct .co{font-weight:700;font-size:17px;letter-spacing:-.02em}
+.acct .facts{display:flex;flex-wrap:wrap;gap:6px}
+.acct dl{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:14px}
+.acct dt{color:var(--ink3);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding-top:2px}
+.acct dd{white-space:pre-line}
+.acct details{border-top:1px solid var(--line);padding-top:10px}
+.acct summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--blue)}
+.acct .call{padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.acct .call:first-of-type{border-top:0}
+.acct .notes{font-size:13px;color:var(--ink2);white-space:pre-line;max-height:160px;overflow:auto}
+.acct form{display:flex;gap:8px}
+.acct form input{flex:1;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fafafa}
+.c-hot{background:var(--red-bg);color:var(--red)} .c-warm{background:var(--amber-bg);color:var(--amber)} .c-cold{background:var(--blue-bg);color:var(--blue)}
+@media (max-width:600px){.accts{grid-template-columns:1fr}.acct dl{grid-template-columns:1fr}.acct dt{padding-top:6px}}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
 
@@ -105,6 +128,7 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
     <img src="../logo.png" alt="Flight Sites">
     <div class="top-r">
       <span class="when" id="updated"></span>
+      <button class="btn ghost" id="sync" title="Pull new replies, Calendly bookings and Fathom calls now">Sync now</button>
       <button class="btn ghost" id="refresh">Refresh</button>
       <button class="btn ghost" id="logout">Sign out</button>
     </div>
@@ -112,6 +136,13 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
 
   <main class="wrap">
     <div class="kpis" id="kpis"></div>
+
+    <h2>Upcoming calls <span class="count" id="nUpcoming">0</span></h2>
+    <div class="panel" id="upcoming"></div>
+
+    <h2>Prospect accounts <span class="count" id="nAccounts">0</span></h2>
+    <p class="note" style="margin:-6px 0 12px">Created automatically when a prospect replies or books. Call notes and the AI summary arrive from Fathom after each call.</p>
+    <div class="accts" id="accounts"></div>
 
     <div class="grid2">
       <div><h2>Call these <span class="count" id="nReplied">0</span></h2><div class="panel" id="replied"></div></div>
@@ -136,6 +167,7 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
       <select id="fVar"><option value="">All variants</option><option>A</option><option>B</option><option>C</option></select>
     </div>
     <div class="panel scroll"><table id="all"></table></div>
+    <p class="note" id="connected"></p>
   </main>
 </div>
 <div class="toast" id="toast"></div>
@@ -211,6 +243,13 @@ function render() {
   ];
   $('kpis').innerHTML = kpis.map(([l, v, s]) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
 
+  renderUpcoming(); renderAccounts();
+  const c = DATA.connected || {};
+  $('connected').innerHTML = 'Connections: ' + [['Calendly', c.calendly], ['Fathom', c.fathom], ['AI summaries', c.ai], ['Stripe', c.stripe]]
+    .map(([n, on]) => `${n} ${on ? '✓' : '<span style="color:var(--red)">not connected</span>'}`).join(' · ') +
+    (DATA.lastSync ? ` · Last sync ${esc(new Date(DATA.lastSync.split(' | ')[0]).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}` : '') +
+    (DATA.lastSync && DATA.lastSync.includes(' | ') ? `<br><span style="color:var(--red)">Sync problem: ${esc(DATA.lastSync.split(' | ').slice(1).join(' | '))}</span>` : '');
+
   list('replied', 'nReplied', L.filter(l => /^Replied/.test(step(l))), 'No replies waiting.', ['Booked', 'Not interested']);
   list('follow', 'nFollow', L.filter(l => /^FOLLOW/.test(step(l))), 'Nobody to follow up with.', ['Booked', 'Not interested']);
   list('booked', 'nBooked', L.filter(l => (l['Stage'] || '') === 'Booked'), 'No calls booked yet.', ['Won', 'Lost']);
@@ -238,6 +277,52 @@ function render() {
   const cur = $('fStep').value;
   $('fStep').innerHTML = '<option value="">Every next step</option>' + steps.map(s => `<option ${s === cur ? 'selected' : ''}>${esc(s)}</option>`).join('');
   table();
+}
+
+function renderUpcoming() {
+  const U = (DATA.upcoming || []).filter(u => new Date(u.end || u.start) > new Date());
+  $('nUpcoming').textContent = U.length;
+  const day = d => { const t = new Date(), x = new Date(d); const diff = Math.round((new Date(x.toDateString()) - new Date(t.toDateString())) / 86400000);
+    return diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : x.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }); };
+  $('upcoming').innerHTML = U.length ? U.map(u => `
+    <div class="item">
+      <div class="when-col"><div class="d">${day(u.start)}</div><div class="t">${new Date(u.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</div></div>
+      <div class="main">
+        <div class="name">${esc(u.company || u.invitee || u.email)} ${u.company ? '' : '<span class="chip c-gray">not a known prospect</span>'}</div>
+        <div class="meta">${esc(u.name)}${u.invitee ? ' · ' + esc(u.invitee) : ''}${u.email ? ' · <a href="mailto:' + esc(u.email) + '">' + esc(u.email) + '</a>' : ''}</div>
+      </div>
+      ${u.joinUrl ? `<a class="mini" style="display:inline-flex;align-items:center" href="${esc(u.joinUrl)}" target="_blank" rel="noopener">Join</a>` : ''}
+    </div>`).join('') : `<div class="empty">${(DATA.connected || {}).calendly ? 'No calls booked in the next 30 days.' : 'Calendly not connected yet.'}</div>`;
+}
+
+function renderAccounts() {
+  const A = (DATA.accounts || []).slice().sort((a, b) => (new Date(b['Last call'] || b['Created']) - new Date(a['Last call'] || a['Created'])));
+  $('nAccounts').textContent = A.length;
+  const leadOf = a => DATA.leads.find(l => (l['Contact email'] || '').toLowerCase() === (a['Contact email'] || '').toLowerCase()) || {};
+  const callsOf = a => (DATA.calls || []).filter(c => (c.email || '').toLowerCase() === (a['Contact email'] || '').toLowerCase());
+  const fit = f => { const k = String(f || '').split(' ')[0]; return k ? `<span class="chip c-${k.toLowerCase()}" title="${esc(f)}">${esc(k)}</span>` : ''; };
+  const row = (k, v) => v ? `<dt>${k}</dt><dd>${esc(v)}</dd>` : '';
+  $('accounts').innerHTML = A.length ? A.map(a => {
+    const l = leadOf(a), calls = callsOf(a), stage = l['Stage'] || '';
+    return `<div class="acct">
+      <div class="hd"><div><div class="co">${esc(a['Company'])}</div>
+        <div class="meta">${esc(a['Market'])}${a['Phone'] ? ' · <a href="tel:' + esc(a['Phone']) + '">' + esc(a['Phone']) + '</a>' : ''} · <a href="mailto:${esc(a['Contact email'])}">${esc(a['Contact email'])}</a>${a['Website'] ? ' · <a href="' + esc(a['Website']) + '" target="_blank" rel="noopener">site</a>' : ''}</div></div>
+        ${fit(a['Fit'])}</div>
+      <div class="facts">
+        ${stage ? `<span class="chip ${chipFor(stage)}">${esc(stage)}</span>` : ''}
+        ${a['Variant'] ? `<span class="chip c-gray">Variant ${esc(a['Variant'])}</span>` : ''}
+        <span class="chip c-gray">${esc(a['Source'] || 'Reply')} · ${esc(a['Created'])}</span>
+        ${a['Next call'] ? `<span class="chip c-blue">Next call ${esc(a['Next call'])}</span>` : ''}
+      </div>
+      ${a['Situation'] ? `<dl>${row('Situation', a['Situation'])}${row('Pain points', a['Pain points'])}${row('Objections', a['Objections'])}${row('Budget / timing', a['Budget & timeline'])}${row('Decides', a['Decision makers'])}${row('Next steps', a['Next steps'])}</dl>`
+        : `<div class="meta">No call notes yet. They'll appear here after a recorded Fathom call.</div>`}
+      ${calls.length ? `<details><summary>${calls.length} call${calls.length > 1 ? 's' : ''}</summary>${calls.map(c => `
+        <div class="call"><b>${esc(c.title || 'Call')}</b> · ${esc(c.date)}${c.link ? ` · <a href="${esc(c.link)}" target="_blank" rel="noopener">Fathom recording</a>` : ''}
+        ${c.ai && c.ai.fit_reason ? `<div class="meta">${esc(c.ai.fit_reason)}</div>` : ''}</div>`).join('')}</details>` : ''}
+      ${a['Notes'] ? `<div class="notes">${esc(a['Notes'])}</div>` : ''}
+      <form class="noteForm" data-email="${esc(a['Contact email'])}"><input name="note" placeholder="Add a note…" autocomplete="off"><button class="mini">Save</button></form>
+    </div>`;
+  }).join('') : `<div class="panel"><div class="empty">No accounts yet. One is created the moment a prospect replies or books a call.</div></div>`;
 }
 
 function list(id, countId, items, emptyMsg, actions, showNotes) {
@@ -291,6 +376,19 @@ function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add(
 
 $('loginForm').addEventListener('submit', signIn);
 $('refresh').addEventListener('click', refresh);
+$('sync').addEventListener('click', async () => {
+  const b = $('sync'); b.disabled = true; b.textContent = 'Syncing…';
+  try { DATA = await call('sync'); render(); toast('Synced'); } catch (err) { toast(MSG[err.message] || 'Sync failed. Try again.'); }
+  b.disabled = false; b.textContent = 'Sync now';
+});
+document.addEventListener('submit', async e => {
+  const f = e.target.closest('form.noteForm'); if (!f) return;
+  e.preventDefault();
+  const note = f.note.value.trim(); if (!note) return;
+  f.querySelector('button').disabled = true;
+  try { DATA = await call('addNote', { email: f.dataset.email, note }); render(); toast('Note saved'); }
+  catch (err) { toast('Could not save the note.'); f.querySelector('button').disabled = false; }
+});
 $('logout').addEventListener('click', logout);
 ['q', 'fStep', 'fVar'].forEach(id => $(id).addEventListener('input', table));
 document.addEventListener('click', e => { const b = e.target.closest('button.mini'); if (b) setStage(Number(b.dataset.row), b.dataset.co, b.dataset.stage); });
@@ -301,7 +399,18 @@ if (PW || DEMO) signIn();
 // ---------- demo data (open /admin/?demo to preview the layout without the backend) ----------
 function demo(action, extra) {
   const d = new Date(), ago = n => { const x = new Date(d); x.setDate(x.getDate() - n); return x.toLocaleDateString(); };
-  window._demo = window._demo || { updated: d.toISOString(), stripe: null, leads: [
+  const at = (days, h) => { const x = new Date(d); x.setDate(x.getDate() + days); x.setHours(h, 0, 0, 0); return x.toISOString(); };
+  window._demo = window._demo || { updated: d.toISOString(), stripe: null, lastSync: d.toISOString(),
+  connected: { calendly: true, fathom: true, ai: true, stripe: false },
+  upcoming: [
+    { start: at(0, 15), end: at(0, 16), name: '15-minute website tour', invitee: 'Mike Rivera', email: 'office@wecareheatandair.com', company: 'We Care Heating, Cooling, Plumbing & Electric', joinUrl: 'https://zoom.us/j/1' },
+    { start: at(2, 10), end: at(2, 11), name: '15-minute website tour', invitee: 'Sam Lee', email: 'sam@example.com', company: '', joinUrl: '' }],
+  accounts: [
+    { Company: "Hilliard's Air Conditioning & Heating", 'Contact email': 'ar.hilliards@outlook.com', Phone: '352-622-9390', Website: 'https://www.hilliardsairandheat.com/', Market: 'Ocala, Florida', Variant: 'C', Created: ago(5), Source: 'Email reply', 'Last call': ago(1),
+      Situation: 'Family-owned since 1988, 6 trucks. Current site is 10 years old; most work comes from referrals and Google Maps.', 'Pain points': 'Site looks dated on phones\nNo way to book online', Objections: 'Worried about cost after a bad agency experience', 'Budget & timeline': 'Wants it live before spring AC season', 'Decision makers': 'Owner (Ray) decides; daughter runs the office', 'Next steps': 'Send pricing by Friday (Kyle)\nOwner to send logo files', Fit: 'Hot — clear pain, timeline, and decision maker on the call', Notes: '[Oct 1, 3:10 PM · Matt] Prefers calls after 4pm.' },
+    { Company: 'We Care Heating, Cooling, Plumbing & Electric', 'Contact email': 'office@wecareheatandair.com', Phone: '478-200-9166', Market: 'Middle Georgia', Variant: 'A', Created: ago(2), Source: 'Email reply', 'Next call': 'Today 3:00 PM' }],
+  calls: [{ company: "Hilliard's Air Conditioning & Heating", email: 'ar.hilliards@outlook.com', date: ago(1), title: 'Website tour', link: 'https://fathom.video/', ai: { fit_reason: 'Clear pain, timeline, and decision maker on the call.' } }],
+  leads: [
     { row: 4, Company: 'We Care Heating, Cooling, Plumbing & Electric', Market: 'Middle Georgia', 'Contact email': 'office@wecareheatandair.com', Phone: '478-200-9166', Website: 'https://wecareheatandair.com/', Stage: 'Queued', Variant: 'A', Queued: ago(2), 'Email status': 'EMAIL_REPLIED', 'Next step': 'Replied: call them', 'Pitch image': 'https://flightsites.net/p/44e82cd0c382.jpg' },
     { row: 5, Company: 'Service First Heating & Air Conditioning', Market: 'Southwest Florida', 'Contact email': 'dave@servicefirstfl.com', Phone: '239-935-7771', Stage: 'Queued', Variant: 'A', Queued: ago(4), 'Email status': 'EMAIL_SENT', 'Next step': 'FOLLOW UP (72h, not opened)', 'Pitch image': 'https://flightsites.net/p/2592c371a05f.jpg' },
     { row: 6, Company: 'Florid Aire Conditioning LLC', Market: 'South Florida', 'Contact email': 'info@floridaire.com', Phone: '954-893-3122', Stage: 'Queued', Variant: 'B', Queued: ago(1), 'Email status': 'EMAIL_OPENED', 'Next step': 'Opened: waiting on reply' },
@@ -310,6 +419,7 @@ function demo(action, extra) {
     { row: 9, Company: 'Eco Temp HVAC', Market: 'Chicago, Illinois', 'Contact email': 'info@ecotemphvac.com', Phone: '224-253-8131', Stage: 'Queued', Variant: 'C', Queued: d.toLocaleDateString(), 'Email status': '', 'Next step': 'Queued: sends at 11 AM' },
     { row: 10, Company: 'Thermal Concepts', Market: 'Florida and Georgia', 'Contact email': 'info@thermalconcepts.com', Stage: 'Skipped', 'Next step': 'Skipped' }
   ]};
+  if (action === 'addNote') { const a = window._demo.accounts.find(x => x['Contact email'] === extra.email); if (a) a.Notes = `[now] ${extra.note}` + (a.Notes ? '\n' + a.Notes : ''); }
   if (action === 'setStage') { const l = window._demo.leads.find(x => x.row === extra.row); if (l) { l.Stage = extra.stage; l['Next step'] = extra.stage || l['Next step']; } }
   return Promise.resolve(JSON.parse(JSON.stringify(window._demo)));
 }
