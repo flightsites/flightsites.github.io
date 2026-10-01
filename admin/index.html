@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Flight Sites Admin</title>
+<link rel="icon" type="image/png" href="../favicon.png">
+<style>
+:root{
+  --bg:#f5f5f7; --card:#fff; --ink:#1d1d1f; --ink2:#6e6e73; --ink3:#86868b; --line:rgba(0,0,0,.08);
+  --red:#d70015; --red-bg:#fde8ea; --green:#1a7f37; --green-bg:#e3f4e8; --blue:#0b6bcb; --blue-bg:#e6f0fb;
+  --amber:#a05a00; --amber-bg:#fff2dc;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--blue);text-decoration:none}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.hidden{display:none!important}
+
+/* Login */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px}
+.login form{background:var(--card);border-radius:24px;padding:40px 32px;width:100%;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.08);text-align:center}
+.login img{height:26px;margin:0 auto 28px;display:block}
+.login h1{font-size:22px;letter-spacing:-.02em;margin-bottom:6px}
+.login p{color:var(--ink2);font-size:14px;margin-bottom:24px}
+.login input{width:100%;height:48px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:#fafafa;margin-bottom:12px}
+.login input:focus{outline:2px solid var(--blue);outline-offset:-1px;background:#fff}
+.btn{height:44px;padding:0 18px;border:0;border-radius:999px;background:var(--ink);color:#fff;font-weight:600;cursor:pointer}
+.btn.full{width:100%;height:48px}
+.btn.ghost{background:rgba(0,0,0,.05);color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.err{color:var(--red);font-size:14px;margin-top:12px;min-height:20px}
+
+/* App */
+header.top{position:sticky;top:0;z-index:10;background:rgba(245,245,247,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
+header.top img{height:22px}
+.top-r{display:flex;align-items:center;gap:10px;color:var(--ink3);font-size:13px}
+.top-r .btn{height:34px;font-size:13px;padding:0 14px}
+main{padding:28px 0 64px}
+h2{font-size:20px;letter-spacing:-.02em;margin:36px 0 14px;display:flex;align-items:center;gap:10px}
+h2 .count{font-size:13px;font-weight:600;color:var(--ink2);background:rgba(0,0,0,.06);border-radius:999px;padding:2px 9px}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpi{background:var(--card);border-radius:18px;padding:18px}
+.kpi .v{font-size:28px;font-weight:700;letter-spacing:-.03em}
+.kpi .l{color:var(--ink2);font-size:13px}
+.kpi .s{color:var(--ink3);font-size:12px;margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:var(--card);border-radius:18px;padding:6px 0;overflow:hidden}
+.panel .empty{padding:22px 20px;color:var(--ink3)}
+.item{display:flex;gap:14px;align-items:flex-start;padding:14px 20px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .thumb{width:72px;height:45px;border-radius:6px;object-fit:cover;flex:none;background:#eee}
+.item .main{flex:1;min-width:0}
+.item .name{font-weight:600}
+.item .meta{color:var(--ink2);font-size:13px;overflow-wrap:anywhere}
+.item .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.c-red{background:var(--red-bg);color:var(--red)} .c-green{background:var(--green-bg);color:var(--green)}
+.c-blue{background:var(--blue-bg);color:var(--blue)} .c-amber{background:var(--amber-bg);color:var(--amber)}
+.c-gray{background:rgba(0,0,0,.06);color:var(--ink2)}
+.mini{height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:600;cursor:pointer}
+.mini:hover{background:#f2f2f2}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:11px 14px;border-top:1px solid var(--line);font-size:14px;vertical-align:middle}
+th{font-size:12px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;border-top:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.best{font-weight:700}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.tools input,.tools select{height:38px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff}
+.tools input{flex:1;min-width:200px}
+.scroll{overflow-x:auto}
+.note{color:var(--ink3);font-size:13px;margin-top:10px}
+td select{height:30px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:0 6px;font-size:13px}
+.stripe-off{padding:22px 20px;color:var(--ink2)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+
+@media (max-width:980px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:1fr}}
+@media (max-width:600px){
+  .wrap{padding:0 16px}.kpis{grid-template-columns:repeat(2,1fr)}
+  .top-r .when{display:none}
+  .hide-sm{display:none}
+}
+</style>
+</head>
+<body>
+
+<section class="login" id="login">
+  <form id="loginForm" autocomplete="on">
+    <img src="../logo.png" alt="Flight Sites">
+    <h1>Admin</h1>
+    <p>Enter the team password.</p>
+    <input type="password" id="pw" name="password" placeholder="Password" autocomplete="current-password" required autofocus>
+    <button class="btn full" id="loginBtn">Sign in</button>
+    <div class="err" id="loginErr"></div>
+  </form>
+</section>
+
+<div id="app" class="hidden">
+  <header class="top"><div class="wrap">
+    <img src="../logo.png" alt="Flight Sites">
+    <div class="top-r">
+      <span class="when" id="updated"></span>
+      <button class="btn ghost" id="refresh">Refresh</button>
+      <button class="btn ghost" id="logout">Sign out</button>
+    </div>
+  </div></header>
+
+  <main class="wrap">
+    <div class="kpis" id="kpis"></div>
+
+    <div class="grid2">
+      <div><h2>Call these <span class="count" id="nReplied">0</span></h2><div class="panel" id="replied"></div></div>
+      <div><h2>Follow up <span class="count" id="nFollow">0</span></h2><div class="panel" id="follow"></div></div>
+    </div>
+    <div class="grid2">
+      <div><h2>Booked calls <span class="count" id="nBooked">0</span></h2><div class="panel" id="booked"></div></div>
+      <div><h2>Needs review <span class="count" id="nReview">0</span></h2><div class="panel" id="review"></div></div>
+    </div>
+
+    <h2>Image test (A/B/C)</h2>
+    <div class="panel scroll"><table id="abc"></table></div>
+    <p class="note">Judge the test on reply rate and booked calls, not opens (the subject line is what gets the open). Give it ~200 sends per variant before deciding.</p>
+
+    <h2>Revenue</h2>
+    <div class="panel" id="stripe"></div>
+
+    <h2>All prospects <span class="count" id="nAll">0</span></h2>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Search company, market, email…">
+      <select id="fStep"><option value="">Every next step</option></select>
+      <select id="fVar"><option value="">All variants</option><option>A</option><option>B</option><option>C</option></select>
+    </div>
+    <div class="panel scroll"><table id="all"></table></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// The private backend (Google Apps Script web app on the lead sheet). Holds the password check + data.
+const API = "";
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DEMO = new URLSearchParams(location.search).has('demo');
+let PW = '', DATA = null;
+try { PW = sessionStorage.getItem('fs_pw') || ''; } catch {}
+
+async function call(action, extra = {}) {
+  if (DEMO) return demo(action, extra);
+  if (!API) throw new Error('not_connected');
+  const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ password: PW, action, ...extra }) });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'error');
+  return j.data;
+}
+
+const MSG = { unauthorized: 'Wrong password.', locked: 'Too many wrong tries. Wait 10 minutes.',
+  not_configured: 'Backend has no password set yet.', not_connected: 'Dashboard is not connected to the sheet yet.',
+  row_moved_refresh_and_retry: 'The sheet changed. Refreshed; try again.' };
+
+async function signIn(e) {
+  e && e.preventDefault();
+  if (e) PW = $('pw').value;
+  $('loginBtn').disabled = true; $('loginErr').textContent = '';
+  try {
+    DATA = await call('data');
+    try { sessionStorage.setItem('fs_pw', PW); } catch {}
+    $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+    render();
+  } catch (err) {
+    PW = ''; try { sessionStorage.removeItem('fs_pw'); } catch {}
+    $('login').classList.remove('hidden'); $('app').classList.add('hidden');
+    $('loginErr').textContent = MSG[err.message] || 'Could not connect. Try again.';
+  }
+  $('loginBtn').disabled = false;
+}
+
+// ---------- derived fields ----------
+const st = l => String(l['Email status'] || '').toUpperCase();
+const sent = l => !!l['Variant'] && st(l) && st(l) !== 'NOT FOUND';
+const opened = l => /OPEN|CLICK|REPL/.test(st(l));
+const replied = l => /REPL/.test(st(l));
+const booked = l => /^(Booked|Won)/.test(l['Stage'] || '');
+const step = l => l['Next step'] || (l['Stage'] ? l['Stage'] : 'New');
+function chipFor(s) {
+  if (/^FOLLOW/.test(s)) return 'c-red'; if (/^Replied/.test(s)) return 'c-green';
+  if (/^(Booked|Won)/.test(s)) return 'c-blue'; if (/^(Needs review|Bounced)/.test(s)) return 'c-amber';
+  return 'c-gray';
+}
+const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '—';
+
+// ---------- render ----------
+function render() {
+  const L = DATA.leads;
+  $('updated').textContent = 'Updated ' + new Date(DATA.updated).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const S = L.filter(sent), today = new Date().toDateString();
+  const kpis = [
+    ['Prospects', L.length, L.filter(l => !l['Stage']).length + ' new'],
+    ['Emailed', S.length, L.filter(l => l['Variant'] && new Date(l['Queued']).toDateString() === today).length + ' queued today'],
+    ['Opened', pct(S.filter(opened).length, S.length), S.filter(opened).length + ' emails'],
+    ['Replied', S.filter(replied).length, pct(S.filter(replied).length, S.length) + ' reply rate'],
+    ['Booked', L.filter(booked).length, pct(L.filter(booked).length, S.length) + ' of emailed'],
+    DATA.stripe ? ['Revenue (30d)', money(DATA.stripe.revenue30), money(DATA.stripe.mrr) + ' MRR']
+                : ['Won', L.filter(l => l['Stage'] === 'Won').length, 'deals closed']
+  ];
+  $('kpis').innerHTML = kpis.map(([l, v, s]) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  list('replied', 'nReplied', L.filter(l => /^Replied/.test(step(l))), 'No replies waiting.', ['Booked', 'Not interested']);
+  list('follow', 'nFollow', L.filter(l => /^FOLLOW/.test(step(l))), 'Nobody to follow up with.', ['Booked', 'Not interested']);
+  list('booked', 'nBooked', L.filter(l => (l['Stage'] || '') === 'Booked'), 'No calls booked yet.', ['Won', 'Lost']);
+  list('review', 'nReview', L.filter(l => l['Stage'] === 'Needs review'), 'Nothing needs review.', [], true);
+
+  // A/B/C
+  const rows = ['A', 'B', 'C'].map(v => {
+    const g = L.filter(l => l['Variant'] === v), s = g.filter(sent);
+    return { v, q: g.length, s: s.length, o: s.filter(opened).length, r: s.filter(replied).length, b: g.filter(booked).length };
+  });
+  const best = Math.max(...rows.map(r => r.s ? r.r / r.s : 0));
+  const label = { A: 'A · Pitch image', B: 'B · Template image', C: 'C · No image' };
+  $('abc').innerHTML = `<tr><th>Variant</th><th class="num">Queued</th><th class="num">Sent</th><th class="num hide-sm">Opened</th><th class="num">Replied</th><th class="num">Reply rate</th><th class="num">Booked</th></tr>` +
+    rows.map(r => `<tr><td>${label[r.v]}</td><td class="num">${r.q}</td><td class="num">${r.s}</td><td class="num hide-sm">${pct(r.o, r.s)}</td><td class="num">${r.r}</td><td class="num ${r.s && best && r.r / r.s === best ? 'best' : ''}">${pct(r.r, r.s)}</td><td class="num">${r.b}</td></tr>`).join('');
+
+  // Stripe
+  const sp = DATA.stripe;
+  $('stripe').innerHTML = !sp
+    ? `<div class="stripe-off">Not connected yet. Add a read-only Stripe key to the backend (<b>STRIPE_SECRET_KEY</b>) and revenue, MRR and recent payments show up here.</div>`
+    : `<div class="kpis" style="padding:14px"><div class="kpi"><div class="l">Last 30 days</div><div class="v">${money(sp.revenue30)}</div></div><div class="kpi"><div class="l">MRR</div><div class="v">${money(sp.mrr)}</div></div><div class="kpi"><div class="l">All time</div><div class="v">${money(sp.revenueAll)}</div></div><div class="kpi"><div class="l">Active subscriptions</div><div class="v">${sp.customers}</div></div></div>` +
+      (sp.recent || []).map(p => `<div class="item"><div class="main"><div class="name">${esc(p.name)}</div><div class="meta">${new Date(p.date).toLocaleDateString()}</div></div><b>${money(p.amount)}</b></div>`).join('');
+
+  // filters + table
+  const steps = [...new Set(L.map(step))].sort();
+  const cur = $('fStep').value;
+  $('fStep').innerHTML = '<option value="">Every next step</option>' + steps.map(s => `<option ${s === cur ? 'selected' : ''}>${esc(s)}</option>`).join('');
+  table();
+}
+
+function list(id, countId, items, emptyMsg, actions, showNotes) {
+  $(countId).textContent = items.length;
+  $(id).innerHTML = items.length ? items.map(l => `
+    <div class="item">
+      ${l['Pitch image'] ? `<a href="${esc(l['Pitch image'])}" target="_blank" rel="noopener"><img class="thumb" src="${esc(l['Pitch image'])}" alt="" loading="lazy"></a>` : ''}
+      <div class="main">
+        <div class="name">${esc(l['Company'])} ${l['Variant'] ? `<span class="chip c-gray">${esc(l['Variant'])}</span>` : ''}</div>
+        <div class="meta">${esc(l['Market'])}${l['Phone'] ? ' · <a href="tel:' + esc(l['Phone']) + '">' + esc(l['Phone']) + '</a>' : ''} · <a href="mailto:${esc(l['Contact email'])}">${esc(l['Contact email'])}</a>${l['Website'] ? ' · <a href="' + esc(l['Website']) + '" target="_blank" rel="noopener">site</a>' : ''}</div>
+        ${showNotes && l['Pitch notes'] ? `<div class="meta" style="margin-top:4px">${esc(l['Pitch notes'])}</div>` : ''}
+        ${actions.length ? `<div class="acts">${actions.map(a => `<button class="mini" data-row="${l.row}" data-co="${esc(l['Company'])}" data-stage="${a}">${a}</button>`).join('')}</div>` : ''}
+      </div>
+    </div>`).join('') : `<div class="empty">${emptyMsg}</div>`;
+}
+
+function table() {
+  const q = $('q').value.trim().toLowerCase(), fs = $('fStep').value, fv = $('fVar').value;
+  const L = DATA.leads.filter(l =>
+    (!q || [l['Company'], l['Market'], l['Contact email'], l['Pitch notes']].join(' ').toLowerCase().includes(q)) &&
+    (!fs || step(l) === fs) && (!fv || l['Variant'] === fv));
+  $('nAll').textContent = L.length;
+  const stages = ['', 'Booked', 'Won', 'Lost', 'Not interested', 'Needs review', 'Skipped'];
+  $('all').innerHTML = `<tr><th>Company</th><th class="hide-sm">Market</th><th>Var.</th><th>Next step</th><th class="hide-sm">Queued</th><th>Stage</th></tr>` +
+    L.map(l => {
+      const s = step(l), own = stages.includes(l['Stage'] || '');
+      return `<tr>
+        <td><b>${esc(l['Company'])}</b><div class="meta" style="color:var(--ink3);font-size:12px">${esc(l['Contact email'])}</div></td>
+        <td class="hide-sm">${esc(l['Market'])}</td>
+        <td>${esc(l['Variant'] || '')}</td>
+        <td><span class="chip ${chipFor(s)}">${esc(s)}</span></td>
+        <td class="hide-sm">${esc(l['Queued'] || '')}</td>
+        <td>${own ? `<select data-row="${l.row}" data-co="${esc(l['Company'])}">${stages.map(x => `<option value="${x}" ${x === (l['Stage'] || '') ? 'selected' : ''}>${x || '—'}</option>`).join('')}</select>` : esc(l['Stage'])}</td>
+      </tr>`;
+    }).join('');
+}
+
+async function setStage(row, company, stage) {
+  try {
+    DATA = await call('setStage', { row, company, stage });
+    render(); toast(`${company}: ${stage || 'cleared'}`);
+  } catch (err) {
+    toast(MSG[err.message] || 'Could not save. Try again.');
+    if (err.message === 'row_moved_refresh_and_retry') refresh();
+  }
+}
+async function refresh() { try { DATA = await call('data'); render(); } catch (err) { if (err.message === 'unauthorized') logout(); } }
+function logout() { PW = ''; try { sessionStorage.removeItem('fs_pw'); } catch {} location.reload(); }
+function money(n) { return (n ?? 0).toLocaleString(undefined, { style: 'currency', currency: (DATA.stripe && DATA.stripe.currency || 'usd').toUpperCase(), maximumFractionDigits: 0 }); }
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); }
+
+$('loginForm').addEventListener('submit', signIn);
+$('refresh').addEventListener('click', refresh);
+$('logout').addEventListener('click', logout);
+['q', 'fStep', 'fVar'].forEach(id => $(id).addEventListener('input', table));
+document.addEventListener('click', e => { const b = e.target.closest('button.mini'); if (b) setStage(Number(b.dataset.row), b.dataset.co, b.dataset.stage); });
+document.addEventListener('change', e => { const s = e.target.closest('td select'); if (s) setStage(Number(s.dataset.row), s.dataset.co, s.value); });
+setInterval(() => { if (DATA && !document.hidden) refresh(); }, 5 * 60 * 1000);
+if (PW || DEMO) signIn();
+
+// ---------- demo data (open /admin/?demo to preview the layout without the backend) ----------
+function demo(action, extra) {
+  const d = new Date(), ago = n => { const x = new Date(d); x.setDate(x.getDate() - n); return x.toLocaleDateString(); };
+  window._demo = window._demo || { updated: d.toISOString(), stripe: null, leads: [
+    { row: 4, Company: 'We Care Heating, Cooling, Plumbing & Electric', Market: 'Middle Georgia', 'Contact email': 'office@wecareheatandair.com', Phone: '478-200-9166', Website: 'https://wecareheatandair.com/', Stage: 'Queued', Variant: 'A', Queued: ago(2), 'Email status': 'EMAIL_REPLIED', 'Next step': 'Replied: call them', 'Pitch image': 'https://flightsites.net/p/44e82cd0c382.jpg' },
+    { row: 5, Company: 'Service First Heating & Air Conditioning', Market: 'Southwest Florida', 'Contact email': 'dave@servicefirstfl.com', Phone: '239-935-7771', Stage: 'Queued', Variant: 'A', Queued: ago(4), 'Email status': 'EMAIL_SENT', 'Next step': 'FOLLOW UP (72h, not opened)', 'Pitch image': 'https://flightsites.net/p/2592c371a05f.jpg' },
+    { row: 6, Company: 'Florid Aire Conditioning LLC', Market: 'South Florida', 'Contact email': 'info@floridaire.com', Phone: '954-893-3122', Stage: 'Queued', Variant: 'B', Queued: ago(1), 'Email status': 'EMAIL_OPENED', 'Next step': 'Opened: waiting on reply' },
+    { row: 7, Company: "Hilliard's Air Conditioning & Heating", Market: 'Ocala, Florida', 'Contact email': 'ar.hilliards@outlook.com', Phone: '352-622-9390', Stage: 'Booked', Variant: 'C', Queued: ago(6), 'Email status': 'EMAIL_REPLIED', 'Next step': 'Booked' },
+    { row: 8, Company: 'Day & Night Mechanical', Market: 'Denver, Colorado', 'Contact email': 'hvac@dnmech.com', Phone: '303-936-2696', Stage: 'Needs review', 'Pitch notes': 'Two phone numbers on their site.', 'Next step': 'Needs review' },
+    { row: 9, Company: 'Eco Temp HVAC', Market: 'Chicago, Illinois', 'Contact email': 'info@ecotemphvac.com', Phone: '224-253-8131', Stage: 'Queued', Variant: 'C', Queued: d.toLocaleDateString(), 'Email status': '', 'Next step': 'Queued: sends at 11 AM' },
+    { row: 10, Company: 'Thermal Concepts', Market: 'Florida and Georgia', 'Contact email': 'info@thermalconcepts.com', Stage: 'Skipped', 'Next step': 'Skipped' }
+  ]};
+  if (action === 'setStage') { const l = window._demo.leads.find(x => x.row === extra.row); if (l) { l.Stage = extra.stage; l['Next step'] = extra.stage || l['Next step']; } }
+  return Promise.resolve(JSON.parse(JSON.stringify(window._demo)));
+}
+</script>
+</body>
+</html>
