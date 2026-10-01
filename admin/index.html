@@ -215,9 +215,11 @@ async function signIn(e) {
 
 // ---------- derived fields ----------
 const st = l => String(l['Email status'] || '').toUpperCase();
-const sent = l => !!l['Variant'] && st(l) && st(l) !== 'NOT FOUND';
-const opened = l => /OPEN|CLICK|REPL/.test(st(l));
-const replied = l => /REPL/.test(st(l));
+// A bounce never counts as sent/delivered or opened (bounce servers and scanners fire the open pixel).
+const bounced = l => l['Stage'] === 'Bounced' || /BOUNC/.test(st(l));
+const sent = l => !!l['Variant'] && st(l) && st(l) !== 'NOT FOUND' && !bounced(l);
+const opened = l => !bounced(l) && /OPEN|CLICK|REPL/.test(st(l));
+const replied = l => !bounced(l) && /REPL/.test(st(l));
 const booked = l => /^(Booked|Won)/.test(l['Stage'] || '');
 const step = l => l['Next step'] || (l['Stage'] ? l['Stage'] : 'New');
 function chipFor(s) {
@@ -234,7 +236,7 @@ function render() {
   const S = L.filter(sent), today = new Date().toDateString();
   const kpis = [
     ['Prospects', L.length, L.filter(l => !l['Stage']).length + ' new'],
-    ['Emailed', S.length, L.filter(l => l['Variant'] && new Date(l['Queued']).toDateString() === today).length + ' queued today'],
+    ['Delivered', S.length, L.filter(bounced).length + ' bounced · ' + L.filter(l => l['Variant'] && new Date(l['Queued']).toDateString() === today).length + ' queued today'],
     ['Opened', pct(S.filter(opened).length, S.length), S.filter(opened).length + ' emails'],
     ['Replied', S.filter(replied).length, pct(S.filter(replied).length, S.length) + ' reply rate'],
     ['Booked', L.filter(booked).length, pct(L.filter(booked).length, S.length) + ' of emailed'],
