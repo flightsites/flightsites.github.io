@@ -13,7 +13,7 @@ window.COMPANY = {
   // ---- Identity ----------------------------------------------------------
   name: "Summit Air",                        // Short name used in headlines
   legalName: "Summit Air Heating & Cooling", // Full name for footer
-  logo: "",                                  // "" = clean wordmark of the name
+  logo: "companies/_demo/logo.png",         // "" = clean wordmark of the name
   logoIcon: "",                              // optional square emblem shown next to the name (when there's no good full logo)
   brandColor: "#0b6bcb",                     // Their main brand color (auto-adjusted for readability)
 
