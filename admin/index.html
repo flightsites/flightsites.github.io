@@ -142,7 +142,7 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
 
 <script>
 // The private backend (Google Apps Script web app on the lead sheet). Holds the password check + data.
-const API = "";
+const API = "https://script.google.com/macros/s/AKfycbyvvsSdzm3hfivcuaulXpndBmYXdLMAxd12CMx8DJI12XGamp-ynFmWfT44nASnTllk8w/exec";
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
