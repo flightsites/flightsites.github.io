@@ -182,7 +182,7 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
 
     <p class="note" style="margin-top:8px">The date range applies to the numbers above, the image test, accounts and the prospect table (by the day each email was queued). The to-do lists always show everything.</p>
 
-    <h2>Image test (A/B)</h2>
+    <h2>Email test: audit vs template</h2>
     <div class="panel scroll"><table id="abc"></table></div>
     <p class="note">Judge the test on reply rate and booked calls, not opens (the subject line is what gets the open). Give it ~200 sends per variant before deciding.</p>
 
@@ -193,7 +193,7 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
     <div class="tools">
       <input id="q" type="search" placeholder="Search company, market, email…">
       <select id="fStep"><option value="">Every next step</option></select>
-      <select id="fVar"><option value="">All variants</option><option>A</option><option>B</option><option>C</option></select>
+      <select id="fVar"><option value="">All variants</option><option value="D">D · Audit</option><option value="B">B · Template</option><option value="A">A (retired)</option><option value="C">C (retired)</option></select>
     </div>
     <div class="panel scroll"><table id="all"></table></div>
     <p class="note" id="connected"></p>
@@ -334,12 +334,13 @@ function render() {
   list('review', 'nReview', ALL.filter(l => l['Stage'] === 'Needs review'), 'Nothing needs review.', [], true);
 
   // A/B/C
-  const rows = ['A', 'B', 'C'].filter(v => v !== 'C' || L.some(l => l['Variant'] === 'C')).map(v => {
+  // D (audit) vs B (template) is the live test; A and C are retired and only show when the range has them
+  const rows = ['D', 'B', 'A', 'C'].filter(v => ['D', 'B'].includes(v) || L.some(l => l['Variant'] === v)).map(v => {
     const g = L.filter(l => l['Variant'] === v), s = g.filter(sent);
     return { v, q: g.length, s: s.length, o: s.filter(opened).length, r: s.filter(replied).length, b: g.filter(booked).length };
   });
   const best = Math.max(...rows.map(r => r.s ? r.r / r.s : 0));
-  const label = { A: 'A · Pitch image', B: 'B · Template image', C: 'C · No image' };
+  const label = { D: 'D · Audit email', B: 'B · Template image', A: 'A · Pitch image (retired)', C: 'C · No image (retired)' };
   $('abc').innerHTML = `<tr><th>Variant</th><th class="num">Queued</th><th class="num">Delivered</th><th class="num hide-sm">Opened</th><th class="num">Replied</th><th class="num">Reply rate</th><th class="num">Booked</th></tr>` +
     rows.map(r => `<tr><td>${label[r.v]}</td><td class="num">${r.q}</td><td class="num">${r.s}</td><td class="num hide-sm">${pct(r.o, r.s)}</td><td class="num">${r.r}</td><td class="num ${r.s && best && r.r / r.s === best ? 'best' : ''}">${pct(r.r, r.s)}</td><td class="num">${r.b}</td></tr>`).join('');
 
