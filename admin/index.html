@@ -99,6 +99,13 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
 .acct form input{flex:1;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fafafa}
 .c-hot{background:var(--red-bg);color:var(--red)} .c-warm{background:var(--amber-bg);color:var(--amber)} .c-cold{background:var(--blue-bg);color:var(--blue)}
 @media (max-width:600px){.accts{grid-template-columns:1fr}.acct dl{grid-template-columns:1fr}.acct dt{padding-top:6px}}
+/* Date range */
+.range{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.range select,.range input{height:38px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff}
+.range .lbl{font-weight:600}
+.range .span{color:var(--ink2);font-size:13px}
+.range .custom{display:flex;gap:6px;align-items:center}
+.range .custom.hidden{display:none}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
 
@@ -135,6 +142,26 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
   </div></header>
 
   <main class="wrap">
+    <div class="range">
+      <span class="lbl">Showing</span>
+      <select id="rng" aria-label="Date range">
+        <option value="today">Today</option>
+        <option value="yesterday">Yesterday</option>
+        <option value="wtd">Week to date</option>
+        <option value="lastweek">Last week</option>
+        <option value="last7">Last 7 days</option>
+        <option value="mtd">This month (to date)</option>
+        <option value="lastmonth">Last month</option>
+        <option value="last30">Last 30 days</option>
+        <option value="last3m">Last 3 months</option>
+        <option value="ytd">This year (to date)</option>
+        <option value="lastyear">Last year</option>
+        <option value="all" selected>All time</option>
+        <option value="custom">Custom range…</option>
+      </select>
+      <span class="custom hidden" id="rngCustom"><input type="date" id="rngFrom" aria-label="From"> to <input type="date" id="rngTo" aria-label="To"></span>
+      <span class="span" id="rngSpan"></span>
+    </div>
     <div class="kpis" id="kpis"></div>
 
     <h2>Upcoming calls <span class="count" id="nUpcoming">0</span></h2>
@@ -153,7 +180,9 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
       <div><h2>Needs review <span class="count" id="nReview">0</span></h2><div class="panel" id="review"></div></div>
     </div>
 
-    <h2>Image test (A/B/C)</h2>
+    <p class="note" style="margin-top:8px">The date range applies to the numbers above, the image test, accounts and the prospect table (by the day each email was queued). The to-do lists always show everything.</p>
+
+    <h2>Image test (A/B)</h2>
     <div class="panel scroll"><table id="abc"></table></div>
     <p class="note">Judge the test on reply rate and booked calls, not opens (the subject line is what gets the open). Give it ~200 sends per variant before deciding.</p>
 
@@ -229,14 +258,61 @@ function chipFor(s) {
 }
 const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '—';
 
+// ---------- date range ----------
+// Sheet dates come as "10/1/2026" or "2026-10-01"; read both as a local calendar day (no timezone shift).
+function day(v) {
+  if (!v) return null;
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const d = m ? new Date(+m[1], m[2] - 1, +m[3]) : new Date(v);
+  return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+function rangeFor(key) {
+  const t = day(new Date()), y = t.getFullYear(), mo = t.getMonth();
+  const mon = addDays(t, -((t.getDay() + 6) % 7));            // weeks start Monday
+  switch (key) {
+    case 'today': return [t, t];
+    case 'yesterday': return [addDays(t, -1), addDays(t, -1)];
+    case 'wtd': return [mon, t];
+    case 'lastweek': return [addDays(mon, -7), addDays(mon, -1)];
+    case 'last7': return [addDays(t, -6), t];
+    case 'mtd': return [new Date(y, mo, 1), t];
+    case 'lastmonth': return [new Date(y, mo - 1, 1), new Date(y, mo, 0)];
+    case 'last30': return [addDays(t, -29), t];
+    case 'last3m': return [new Date(y, mo - 3, t.getDate()), t];
+    case 'ytd': return [new Date(y, 0, 1), t];
+    case 'lastyear': return [new Date(y - 1, 0, 1), new Date(y - 1, 11, 31)];
+    case 'custom': { const f = day($('rngFrom').value), to = day($('rngTo').value); return [f, to]; }
+    default: return [null, null];                                // all time
+  }
+}
+let RANGE = [null, null];
+const inRange = v => { if (!RANGE[0] && !RANGE[1]) return true; const d = day(v); if (!d) return false;
+  return (!RANGE[0] || d >= RANGE[0]) && (!RANGE[1] || d <= RANGE[1]); };
+function setRange() {
+  const k = $('rng').value;
+  $('rngCustom').classList.toggle('hidden', k !== 'custom');
+  if (k === 'custom' && !$('rngFrom').value) { const [f, t] = rangeFor('mtd'); $('rngFrom').value = iso(f); $('rngTo').value = iso(t); }
+  RANGE = rangeFor(k);
+  const fmt = d => d.toLocaleDateString([], { month: 'short', day: 'numeric', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
+  $('rngSpan').textContent = !RANGE[0] && !RANGE[1] ? '' : RANGE[0] && RANGE[1] && +RANGE[0] === +RANGE[1] ? fmt(RANGE[0]) : `${RANGE[0] ? fmt(RANGE[0]) : '…'} – ${RANGE[1] ? fmt(RANGE[1]) : '…'}`;
+  try { localStorage.setItem('fs_range', JSON.stringify({ k, f: $('rngFrom').value, t: $('rngTo').value })); } catch {}
+  if (DATA) render();
+}
+const iso = d => d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : '';
+
 // ---------- render ----------
 function render() {
-  const L = DATA.leads;
+  const ALL = DATA.leads;
+  const L = ALL.filter(l => inRange(l['Queued']));              // emailed in the range
+  const added = ALL.filter(l => inRange(l['Added']));           // added to the sheet in the range
+  const ranged = !!(RANGE[0] || RANGE[1]);
   $('updated').textContent = 'Updated ' + new Date(DATA.updated).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   const S = L.filter(sent), today = new Date().toDateString();
   const kpis = [
-    ['Prospects', L.length, L.filter(l => !l['Stage']).length + ' new'],
-    ['Delivered', S.length, L.filter(bounced).length + ' bounced · ' + L.filter(l => l['Variant'] && new Date(l['Queued']).toDateString() === today).length + ' queued today'],
+    ranged ? ['Prospects added', added.length, L.filter(l => l['Variant']).length + ' emailed in range']
+           : ['Prospects', ALL.length, ALL.filter(l => !l['Stage']).length + ' new'],
+    ['Delivered', S.length, L.filter(bounced).length + ' bounced · ' + ALL.filter(l => l['Variant'] && day(l['Queued']) && +day(l['Queued']) === +day(new Date())).length + ' queued today'],
     ['Opened', pct(S.filter(opened).length, S.length), S.filter(opened).length + ' emails'],
     ['Replied', S.filter(replied).length, pct(S.filter(replied).length, S.length) + ' reply rate'],
     ['Booked', L.filter(booked).length, pct(L.filter(booked).length, S.length) + ' of emailed'],
@@ -252,13 +328,13 @@ function render() {
     (DATA.lastSync ? ` · Last sync ${esc(new Date(DATA.lastSync.split(' | ')[0]).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}` : '') +
     (DATA.lastSync && DATA.lastSync.includes(' | ') ? `<br><span style="color:var(--red)">Sync problem: ${esc(DATA.lastSync.split(' | ').slice(1).join(' | '))}</span>` : '');
 
-  list('replied', 'nReplied', L.filter(l => /^Replied/.test(step(l))), 'No replies waiting.', ['Booked', 'Not interested']);
-  list('follow', 'nFollow', L.filter(l => /^FOLLOW/.test(step(l))), 'Nobody to follow up with.', ['Booked', 'Not interested']);
-  list('booked', 'nBooked', L.filter(l => (l['Stage'] || '') === 'Booked'), 'No calls booked yet.', ['Won', 'Lost']);
-  list('review', 'nReview', L.filter(l => l['Stage'] === 'Needs review'), 'Nothing needs review.', [], true);
+  list('replied', 'nReplied', ALL.filter(l => /^Replied/.test(step(l))), 'No replies waiting.', ['Booked', 'Not interested']);
+  list('follow', 'nFollow', ALL.filter(l => /^FOLLOW/.test(step(l))), 'Nobody to follow up with.', ['Booked', 'Not interested']);
+  list('booked', 'nBooked', ALL.filter(l => (l['Stage'] || '') === 'Booked'), 'No calls booked yet.', ['Won', 'Lost']);
+  list('review', 'nReview', ALL.filter(l => l['Stage'] === 'Needs review'), 'Nothing needs review.', [], true);
 
   // A/B/C
-  const rows = ['A', 'B', 'C'].map(v => {
+  const rows = ['A', 'B', 'C'].filter(v => v !== 'C' || L.some(l => l['Variant'] === 'C')).map(v => {
     const g = L.filter(l => l['Variant'] === v), s = g.filter(sent);
     return { v, q: g.length, s: s.length, o: s.filter(opened).length, r: s.filter(replied).length, b: g.filter(booked).length };
   });
@@ -275,7 +351,7 @@ function render() {
       (sp.recent || []).map(p => `<div class="item"><div class="main"><div class="name">${esc(p.name)}</div><div class="meta">${new Date(p.date).toLocaleDateString()}</div></div><b>${money(p.amount)}</b></div>`).join('');
 
   // filters + table
-  const steps = [...new Set(L.map(step))].sort();
+  const steps = [...new Set(ALL.map(step))].sort();
   const cur = $('fStep').value;
   $('fStep').innerHTML = '<option value="">Every next step</option>' + steps.map(s => `<option ${s === cur ? 'selected' : ''}>${esc(s)}</option>`).join('');
   table();
@@ -298,7 +374,7 @@ function renderUpcoming() {
 }
 
 function renderAccounts() {
-  const A = (DATA.accounts || []).slice().sort((a, b) => (new Date(b['Last call'] || b['Created']) - new Date(a['Last call'] || a['Created'])));
+  const A = (DATA.accounts || []).filter(a => inRange(a['Created'])).slice().sort((a, b) => (new Date(b['Last call'] || b['Created']) - new Date(a['Last call'] || a['Created'])));
   $('nAccounts').textContent = A.length;
   const leadOf = a => DATA.leads.find(l => (l['Contact email'] || '').toLowerCase() === (a['Contact email'] || '').toLowerCase()) || {};
   const callsOf = a => (DATA.calls || []).filter(c => (c.email || '').toLowerCase() === (a['Contact email'] || '').toLowerCase());
@@ -343,7 +419,7 @@ function list(id, countId, items, emptyMsg, actions, showNotes) {
 
 function table() {
   const q = $('q').value.trim().toLowerCase(), fs = $('fStep').value, fv = $('fVar').value;
-  const L = DATA.leads.filter(l =>
+  const L = DATA.leads.filter(l => inRange(l['Queued']) &&
     (!q || [l['Company'], l['Market'], l['Contact email'], l['Pitch notes']].join(' ').toLowerCase().includes(q)) &&
     (!fs || step(l) === fs) && (!fv || l['Variant'] === fv));
   $('nAll').textContent = L.length;
@@ -392,6 +468,9 @@ document.addEventListener('submit', async e => {
   catch (err) { toast('Could not save the note.'); f.querySelector('button').disabled = false; }
 });
 $('logout').addEventListener('click', logout);
+['rng', 'rngFrom', 'rngTo'].forEach(id => $(id).addEventListener('change', setRange));
+try { const r = JSON.parse(localStorage.getItem('fs_range') || 'null'); if (r && [...$('rng').options].some(o => o.value === r.k)) { $('rng').value = r.k; $('rngFrom').value = r.f || ''; $('rngTo').value = r.t || ''; } } catch {}
+setRange();
 ['q', 'fStep', 'fVar'].forEach(id => $(id).addEventListener('input', table));
 document.addEventListener('click', e => { const b = e.target.closest('button.mini'); if (b) setStage(Number(b.dataset.row), b.dataset.co, b.dataset.stage); });
 document.addEventListener('change', e => { const s = e.target.closest('td select'); if (s) setStage(Number(s.dataset.row), s.dataset.co, s.value); });
