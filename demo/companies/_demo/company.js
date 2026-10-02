@@ -66,7 +66,7 @@ window.COMPANY = {
   heroPosition: "",  // optional focal point for the hero photo, e.g. "50% 30%"
   photos: {
     hero: "companies/_demo/hero.jpg", // REQUIRED for real companies: their own best photo (van, team, techs at work)
-    technician: "",  // Their tech or team, smiling
+    technician: "companies/_demo/technician.jpg",  // Their tech or team, smiling
     equipment: "",   // Outdoor unit / install
     thermostat: "",  // Thermostat or maintenance
     home: "",        // Home exterior (used full-width at the bottom)
