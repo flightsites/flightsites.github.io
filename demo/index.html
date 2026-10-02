@@ -47,7 +47,7 @@ h3{font-size:24px;letter-spacing:-.022em;line-height:1.15}
 .center{text-align:center}.center .lead{margin-left:auto;margin-right:auto}
 
 /* Section backgrounds — alternate so the page has rhythm */
-.bg-gray{background:var(--bg2)}
+.bg-gray{background:#ebebef}   /* gray sections: deep enough to read as gray on any screen, so white cards pop */
 .bg-tint{background:var(--accent-soft)}
 
 /* Buttons */
@@ -165,7 +165,7 @@ h3{font-size:24px;letter-spacing:-.022em;line-height:1.15}
 
 /* Problem picker */
 .picker{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
-.pick{background:#fff;border:1px solid rgba(0,0,0,.06);box-shadow:0 1px 2px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.05);border-radius:var(--r-md);padding:28px;text-align:left;display:flex;flex-direction:column;gap:18px;min-height:190px;transition:transform .35s var(--ease),background .35s,box-shadow .35s;position:relative}
+.pick{background:#fff;border:1px solid rgba(0,0,0,.07);box-shadow:0 1px 2px rgba(0,0,0,.05),0 6px 20px rgba(0,0,0,.06);border-radius:var(--r-md);padding:28px;text-align:left;display:flex;flex-direction:column;gap:18px;min-height:190px;transition:transform .35s var(--ease),background .35s,box-shadow .35s;position:relative}
 .pick:hover{transform:translateY(-4px);background:#fff;box-shadow:var(--shadow)}
 .pick .ico-circle{width:52px;height:52px;border-radius:16px;font-size:24px;background:var(--bg2)}
 .pick:hover .ico-circle{background:var(--accent-soft)}
@@ -377,8 +377,8 @@ html.shot .hero-img img{transform:none}
   .menu-btn{display:flex}
   .brand img:not(.mark-img){height:36px;max-width:160px}
   .brand img.wide-logo{height:44px;max-width:200px}
-  .hero{padding:28px 0 40px;min-height:0;display:block}
-  #services.sec{padding-top:56px}
+  .hero{padding:28px 0 20px;min-height:0;display:block}
+  #services.sec{padding:28px 0 44px}
   .hero .wrap{grid-template-columns:1fr;gap:44px}
   .live{font-size:13px;margin-bottom:20px}
   .hero h1{font-size:clamp(44px,12.4vw,58px);margin-bottom:18px}
