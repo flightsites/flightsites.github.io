@@ -27,6 +27,7 @@
   --font:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
   --ease:cubic-bezier(.2,.7,.2,1);
   --nav-h:56px;
+  --sec:112px;   /* section spacing: every gap between two sections' content is 2 × --sec (Website Standard → Spacing) */
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
@@ -37,7 +38,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 svg.i{width:1em;height:1em;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .wrap{max-width:1200px;margin:0 auto;padding:0 28px}
 section{position:relative}
-.sec{padding:128px 0}
+.sec{padding:var(--sec) 0}
 .eyebrow{font-size:15px;font-weight:600;color:var(--accent);letter-spacing:-.005em;margin-bottom:14px;display:block}
 h1,h2,h3{letter-spacing:-.035em;line-height:1.04;font-weight:700}
 h2{font-size:clamp(36px,5.2vw,60px)}
@@ -176,7 +177,7 @@ h3{font-size:24px;letter-spacing:-.022em;line-height:1.15}
 .pick.urgent .ico-circle{color:#c2410c}
 
 /* Stats */
-.stats-sec{padding:40px 0}
+.stats-sec{padding:calc(var(--sec) - 44px) 0}
 .stats{display:grid;grid-template-columns:repeat(4,1fr)}
 .stat{padding:44px 28px 44px 0}
 .stat + .stat{padding-left:28px;border-left:1px solid var(--line)}
@@ -277,7 +278,9 @@ h3{font-size:24px;letter-spacing:-.022em;line-height:1.15}
 .faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:26px 0;font-size:20px;font-weight:600;letter-spacing:-.02em}
 .faq summary::-webkit-details-marker{display:none}
 .faq summary .pm{width:32px;height:32px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:16px;flex:none;transition:transform .35s var(--ease)}
-.faq details[open] .pm{transform:rotate(45deg)}
+.faq details[open]:not(.closing) .pm{transform:rotate(45deg)}
+.faq .ans{overflow:hidden}
+.cnt{font-variant-numeric:tabular-nums}
 .faq details p{padding:0 56px 28px 0;color:var(--ink2);font-size:17px;line-height:1.55}
 
 /* Final CTA */
@@ -290,7 +293,7 @@ h3{font-size:24px;letter-spacing:-.022em;line-height:1.15}
 .final .hero-ctas{justify-content:center;margin:0}
 
 /* Footer */
-footer{padding:80px 0 120px;font-size:14px;color:var(--ink2)}
+footer{padding:calc(var(--sec) * 2) 0 120px;font-size:14px;color:var(--ink2)}
 .foot{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px;padding-bottom:40px;border-bottom:1px solid var(--line)}
 .foot h4{font-size:13px;color:var(--ink);font-weight:600;margin-bottom:14px}
 .foot p,.foot a{display:block;line-height:1.9}
@@ -367,18 +370,16 @@ html.shot .hero-img img{transform:none}
 }
 /* ---------- Phone ---------- */
 @media (max-width:760px){
-  :root{--nav-h:52px}
+  :root{--nav-h:52px;--sec:34px}
   body{font-size:16px}
   .wrap{padding:0 20px}
-  .sec{padding:88px 0}
   .nav .wrap{gap:12px}
   .nav-cta .nav-phone,.nav-cta .btn,.nav-cta .badge247{display:none}
   .nav-cta{margin-left:auto}
   .menu-btn{display:flex}
   .brand img:not(.mark-img){height:36px;max-width:160px}
   .brand img.wide-logo{height:44px;max-width:200px}
-  .hero{padding:28px 0 20px;min-height:0;display:block}
-  #services.sec{padding:28px 0 44px}
+  .hero{padding:28px 0 var(--sec);min-height:0;display:block}
   .hero .wrap{grid-template-columns:1fr;gap:44px}
   .live{font-size:13px;margin-bottom:20px}
   .hero h1{font-size:clamp(44px,12.4vw,58px);margin-bottom:18px}
@@ -407,7 +408,7 @@ html.shot .hero-img img{transform:none}
   .pick p{display:none}
   .pick .go{display:none}
   .stats{grid-template-columns:1fr 1fr}
-  .stats-sec{padding:16px 0}
+  .stats-sec{padding:calc(var(--sec) - 28px) 0}
   .stat{padding:28px 16px 28px 0}
   .stat + .stat{padding-left:16px}
   .stat:nth-child(3){padding-left:0;border-left:0;border-top:1px solid var(--line)}
@@ -420,6 +421,7 @@ html.shot .hero-img img{transform:none}
   .tile.photo .txt{padding:28px}
   .tile h3{font-size:24px}
   .rev{flex-basis:84vw;padding:24px}
+  .reviews .rail-wrap:last-child{margin-bottom:-20px}   /* its bottom padding is shadow room, not section spacing */
   .rail{padding:4px 20px 20px;scroll-padding:0 20px}
   .rail-ctrl{display:none}
   .rail-wrap{margin-top:36px}
@@ -434,12 +436,13 @@ html.shot .hero-img img{transform:none}
   .final{margin:10px 10px 0;min-height:560px;border-radius:28px}
   .final .hero-ctas{display:grid;max-width:340px;margin:0 auto}
   .foot{grid-template-columns:1fr;gap:28px}
-  footer{padding:56px 0 130px}
+  footer{padding:calc(var(--sec) * 2) 0 130px}
   .actionbar{display:grid;grid-template-columns:auto 1fr;gap:8px;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:55;padding:8px;border-radius:24px;background:rgba(255,255,255,.8);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);box-shadow:0 10px 40px rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.7);transform:translateY(140%);transition:transform .5s var(--ease)}
   .actionbar.show{transform:none}
   .actionbar .btn{height:50px;border-radius:18px;padding:0 20px}
   .modal{padding:0;place-items:end stretch}
-  .modal .box{max-width:none;border-radius:28px 28px 0 0;max-height:92vh;transform:translateY(100%)}
+  /* Phone: the booking sheet fills exactly the visible screen (dvh = what's between the browser's bars), top flush with the browser bar */
+  .modal .box{max-width:none;border-radius:0;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;transform:translateY(100%)}
   .m-body{padding:24px 20px 8px}
   .m-body h3{font-size:26px}
   .m-foot{padding:14px 20px calc(20px + env(safe-area-inset-bottom))}
@@ -836,7 +839,7 @@ function render(C){
     <div class="wrap">
       <div class="center rv"><h2>Questions? Answered.</h2></div>
       <div class="faq rv">
-        ${faqs.map((f,i)=>`<details ${i===0?'open':''}><summary>${esc(f.q)}<span class="pm">${I('plus')}</span></summary><p>${esc(f.a)}</p></details>`).join('')}
+        ${faqs.map((f,i)=>`<details ${i===0?'open':''}><summary>${esc(f.q)}<span class="pm">${I('plus')}</span></summary><div class="ans"><p>${esc(f.a)}</p></div></details>`).join('')}
       </div>
     </div>
   </section>
@@ -891,6 +894,8 @@ function render(C){
   </div>`;
 
   wire(C);
+  countUp();
+  faqSlide();
   const fit = () => { fitHeadline(); fitServices(); };
   fit();
   Promise.resolve(window.__fontReady).then(fit);
@@ -927,6 +932,50 @@ function fitServices() {
   if (fits() || !more) return;
   more.hidden = false;
   for (let i = chips.length - 1; i > 0 && !fits(); i--) chips[i].hidden = true;
+}
+
+// Stat numbers count up from 0 when they scroll into view ("28+", "4.9★", "24/7"); "$0", "Free", "Local" stay as they are.
+function countUp(){
+  const els = [...document.querySelectorAll('.stat .num')];
+  const still = document.documentElement.classList.contains('shot') || matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window);
+  els.forEach(el => {
+    const t = el.firstChild; if (!t || t.nodeType !== 3) return;
+    const m = t.textContent.match(/^(\d+(?:\.\d+)?)(.*)$/); if (!m || +m[1] === 0) return;
+    const to = +m[1], dec = (m[1].split('.')[1] || '').length;
+    const span = document.createElement('span'); span.className = 'cnt'; span.textContent = still ? m[1] : (0).toFixed(dec);
+    el.replaceChild(span, t); if (m[2]) span.after(m[2]);
+    if (still) return;
+    const io = new IntersectionObserver(([e]) => { if (!e.isIntersecting) return; io.disconnect();
+      const t0 = performance.now(), dur = 1400;
+      const step = now => { const k = Math.min((now - t0) / dur, 1), v = to * (1 - Math.pow(1 - k, 3));
+        span.textContent = v.toFixed(dec); if (k < 1) requestAnimationFrame(step); else span.textContent = m[1]; };
+      requestAnimationFrame(step); }, { threshold: .5 });
+    io.observe(el);
+  });
+}
+
+// FAQ answers slide open and closed (same easing as the booking sheet) instead of popping in.
+function faqSlide(){
+  const ease = getComputedStyle(document.documentElement).getPropertyValue('--ease').trim() || 'ease';
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('.faq details').forEach(d => {
+    const ans = d.querySelector('.ans');
+    d.querySelector('summary').addEventListener('click', e => {
+      e.preventDefault();
+      if (reduce) { d.open = !d.open; return; }
+      if (ans._a) ans._a.cancel();
+      const opening = !d.open || d.classList.contains('closing');   // closed, or tapped again mid-close
+      if (opening) {
+        d.classList.remove('closing'); d.open = true;
+        ans._a = ans.animate([{ height: '0px', opacity: 0 }, { height: ans.scrollHeight + 'px', opacity: 1 }], { duration: 450, easing: ease });
+        ans._a.onfinish = () => { ans._a = null; };
+      } else {
+        d.classList.add('closing');
+        ans._a = ans.animate([{ height: ans.offsetHeight + 'px', opacity: 1 }, { height: '0px', opacity: 0 }], { duration: 380, easing: ease, fill: 'forwards' });
+        ans._a.onfinish = () => { d.open = false; d.classList.remove('closing'); ans._a.cancel(); ans._a = null; };
+      }
+    });
+  });
 }
 
 /* ============================ BEHAVIOR ============================ */
