@@ -16,7 +16,7 @@
 -->
 <style>
 :root{
-  --bg:#ffffff; --bg2:#f5f5f7; --bg3:#fbfbfd;
+  --bg:#ffffff; --bg2:#f2f2f5; --bg3:#fbfbfd;
   --ink:#1d1d1f; --ink2:#6e6e73; --ink3:#86868b;
   --line:rgba(0,0,0,.08);
   --accent:#0b6bcb; --accent2:#5b8cff; --accent-soft:#eaf2fc; --accent-light:#6fb1ff; --on-accent:#fff;
@@ -165,7 +165,7 @@ h3{font-size:24px;letter-spacing:-.022em;line-height:1.15}
 
 /* Problem picker */
 .picker{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
-.pick{background:#fff;border-radius:var(--r-md);padding:28px;text-align:left;display:flex;flex-direction:column;gap:18px;min-height:190px;transition:transform .35s var(--ease),background .35s,box-shadow .35s;position:relative}
+.pick{background:#fff;border:1px solid rgba(0,0,0,.06);box-shadow:0 1px 2px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.05);border-radius:var(--r-md);padding:28px;text-align:left;display:flex;flex-direction:column;gap:18px;min-height:190px;transition:transform .35s var(--ease),background .35s,box-shadow .35s;position:relative}
 .pick:hover{transform:translateY(-4px);background:#fff;box-shadow:var(--shadow)}
 .pick .ico-circle{width:52px;height:52px;border-radius:16px;font-size:24px;background:var(--bg2)}
 .pick:hover .ico-circle{background:var(--accent-soft)}
@@ -377,7 +377,8 @@ html.shot .hero-img img{transform:none}
   .menu-btn{display:flex}
   .brand img:not(.mark-img){height:36px;max-width:160px}
   .brand img.wide-logo{height:44px;max-width:200px}
-  .hero{padding:28px 0 72px;min-height:0;display:block}
+  .hero{padding:28px 0 40px;min-height:0;display:block}
+  #services.sec{padding-top:56px}
   .hero .wrap{grid-template-columns:1fr;gap:44px}
   .live{font-size:13px;margin-bottom:20px}
   .hero h1{font-size:clamp(44px,12.4vw,58px);margin-bottom:18px}
