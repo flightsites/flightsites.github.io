@@ -250,7 +250,22 @@ const sent = l => !!l['Variant'] && st(l) && st(l) !== 'NOT FOUND' && !bounced(l
 const opened = l => !bounced(l) && /OPEN|CLICK|REPL/.test(st(l));
 const replied = l => !bounced(l) && /REPL/.test(st(l));
 const booked = l => /^(Booked|Won)/.test(l['Stage'] || '');
-const step = l => l['Next step'] || (l['Stage'] ? l['Stage'] : 'New');
+const auditReplied = l => /REPL/.test(String(l['Audit status'] || '').toUpperCase());
+const step = l => (auditReplied(l) && !/^(Booked|Won|Lost|Not interested)/.test(l['Stage'] || '')) ? 'Replied: call them'
+  : l['Next step'] || (l['Stage'] ? l['Stage'] : 'New');
+// Every email sent, not just each lead's first: first emails (Variant/Queued/Email status) plus audit follow-ups
+// (Audit sent/Audit status, from the D - Audit tab). Variant 'F' = audit follow-up to someone who opened the first email.
+function emailsOf(L) {
+  const out = [];
+  L.forEach(l => {
+    if (l['Variant']) out.push({ l, v: l['Variant'], date: l['Queued'], st: String(l['Email status'] || '').toUpperCase(), first: true });
+    if (l['Audit sent']) out.push({ l, v: 'F', date: l['Audit sent'], st: String(l['Audit status'] || '').toUpperCase(), first: false });
+  });
+  return out;
+}
+const eSent = e => e.st && e.st !== 'NOT FOUND' && !(e.first && bounced(e.l)) && !/BOUNC/.test(e.st);
+const eOpened = e => eSent(e) && /OPEN|CLICK|REPL/.test(e.st);
+const eReplied = e => eSent(e) && /REPL/.test(e.st);
 function chipFor(s) {
   if (/^FOLLOW/.test(s)) return 'c-red'; if (/^Replied/.test(s)) return 'c-green';
   if (/^(Booked|Won)/.test(s)) return 'c-blue'; if (/^(Needs review|Bounced)/.test(s)) return 'c-amber';
@@ -308,13 +323,14 @@ function render() {
   const added = ALL.filter(l => inRange(l['Added']));           // added to the sheet in the range
   const ranged = !!(RANGE[0] || RANGE[1]);
   $('updated').textContent = 'Updated ' + new Date(DATA.updated).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const E = emailsOf(ALL).filter(e => inRange(e.date)), ES = E.filter(eSent);
   const S = L.filter(sent), today = new Date().toDateString();
   const kpis = [
-    ranged ? ['Prospects added', added.length, L.filter(l => l['Variant']).length + ' emailed in range']
+    ranged ? ['Prospects added', added.length, E.length + ' emails in range']
            : ['Prospects', ALL.length, ALL.filter(l => !l['Stage']).length + ' new'],
-    ['Delivered', S.length, L.filter(bounced).length + ' bounced · ' + ALL.filter(l => l['Variant'] && day(l['Queued']) && +day(l['Queued']) === +day(new Date())).length + ' queued today'],
-    ['Opened', pct(S.filter(opened).length, S.length), S.filter(opened).length + ' emails'],
-    ['Replied', S.filter(replied).length, pct(S.filter(replied).length, S.length) + ' reply rate'],
+    ['Emails delivered', ES.length, L.filter(bounced).length + ' bounced · ' + E.filter(e => e.v === 'F').length + ' audit follow-ups'],
+    ['Opened', pct(ES.filter(eOpened).length, ES.length), ES.filter(eOpened).length + ' emails'],
+    ['Replied', ES.filter(eReplied).length, pct(ES.filter(eReplied).length, ES.length) + ' reply rate'],
     ['Booked', L.filter(booked).length, pct(L.filter(booked).length, S.length) + ' of emailed'],
     DATA.stripe ? ['Revenue (30d)', money(DATA.stripe.revenue30), money(DATA.stripe.mrr) + ' MRR']
                 : ['Won', L.filter(l => l['Stage'] === 'Won').length, 'deals closed']
@@ -335,12 +351,12 @@ function render() {
 
   // A/B/C
   // D (audit) vs B (template) is the live test; A and C are retired and only show when the range has them
-  const rows = ['D', 'B', 'A', 'C'].filter(v => ['D', 'B'].includes(v) || L.some(l => l['Variant'] === v)).map(v => {
-    const g = L.filter(l => l['Variant'] === v), s = g.filter(sent);
-    return { v, q: g.length, s: s.length, o: s.filter(opened).length, r: s.filter(replied).length, b: g.filter(booked).length };
+  const rows = ['D', 'F', 'B', 'A', 'C'].filter(v => ['D', 'B'].includes(v) || E.some(e => e.v === v)).map(v => {
+    const g = E.filter(e => e.v === v), s = g.filter(eSent);
+    return { v, q: g.length, s: s.length, o: s.filter(eOpened).length, r: s.filter(eReplied).length, b: g.filter(e => booked(e.l)).length };
   });
   const best = Math.max(...rows.map(r => r.s ? r.r / r.s : 0));
-  const label = { D: 'D · Audit email', B: 'B · Template image', A: 'A · Pitch image (retired)', C: 'C · No image (retired)' };
+  const label = { D: 'D · Audit email', F: 'D · Audit follow-up (to openers)', B: 'B · Template image', A: 'A · Pitch image (retired)', C: 'C · No image (retired)' };
   $('abc').innerHTML = `<tr><th>Variant</th><th class="num">Queued</th><th class="num">Delivered</th><th class="num hide-sm">Opened</th><th class="num">Replied</th><th class="num">Reply rate</th><th class="num">Booked</th></tr>` +
     rows.map(r => `<tr><td>${label[r.v]}</td><td class="num">${r.q}</td><td class="num">${r.s}</td><td class="num hide-sm">${pct(r.o, r.s)}</td><td class="num">${r.r}</td><td class="num ${r.s && best && r.r / r.s === best ? 'best' : ''}">${pct(r.r, r.s)}</td><td class="num">${r.b}</td></tr>`).join('');
 
