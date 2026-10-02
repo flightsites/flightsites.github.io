@@ -857,7 +857,7 @@ function render(C){
       <div class="foot">
         <div>${brand}<p style="max-width:300px;line-height:1.6">Heating, cooling and indoor air quality for homes across ${esc(city)}${C.state?', '+esc(C.state):''}.</p></div>
         <div><h4>Contact</h4><a href="${tel(C.phone)}">${esc(C.phone)}</a>${C.email?`<a href="mailto:${esc(C.email)}">${esc(C.email)}</a>`:''}${C.address?`<p>${esc(C.address)}</p>`:''}</div>
-        <div><h4>Services</h4>${ISSUES.map(x=>`<a href="#services" data-book="${x.k}">${x.t}</a>`).join('')}</div>
+        <div><h4>Services</h4>${services.map(x=>`<a href="#services">${esc(x)}</a>`).join('')}</div>
         <div><h4>Service area</h4>${areas.slice(0,6).map(a=>`<p>${esc(a)}</p>`).join('')}</div>
       </div>
       <div class="legal"><span>© ${year} ${esc(C.legalName||name)}. All rights reserved.</span><span>${esc(C.license || (C.licensedInsured ? 'Licensed & insured' : ''))}</span></div>
