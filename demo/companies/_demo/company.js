@@ -16,6 +16,8 @@ window.COMPANY = {
   logo: "companies/_demo/logo.png",         // "" = clean wordmark of the name
   logoIcon: "",                              // optional square emblem shown next to the name (when there's no good full logo)
   brandColor: "#0b6bcb",                     // Their main brand color (auto-adjusted for readability)
+  font: "geometric",                         // headline font matched to the logo (Website Standard → Fonts)
+  swooshes: ["#0b78e6", "#ff5a0a"],          // the blue + orange swooshes in their logo, faint behind the hero
 
   // ---- Contact -----------------------------------------------------------
   phone: "(303) 555-0142",
