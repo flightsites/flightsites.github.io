@@ -193,7 +193,7 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
     <div class="panel scroll"><table id="steps"></table></div>
     <p class="note">Each person's emails numbered in order: their 1st email, 2nd (first follow-up), 3rd… Click any prospect below to see their whole journey.</p>
 
-    <h2>Email test: audit vs template</h2>
+    <h2>By email type</h2>
     <div class="panel scroll"><table id="abc"></table></div>
     <p class="note">Judge the test on reply rate and booked calls, not opens (the subject line is what gets the open). Give it ~200 sends per variant before deciding.</p>
 
@@ -286,7 +286,7 @@ function emailsOf(L) {
   Object.values(groups).forEach(g => { g.sort((a, b) => (day(a.date) || 0) - (day(b.date) || 0) || a.v.localeCompare(b.v)); g.forEach((e, i) => { e.n = i + 1; e.first = i === 0; }); });
   return out;
 }
-const TYPE = { A: 'Pitch image', B: 'Template image', C: 'No image', D: 'Audit' };
+const TYPE = { A: 'Pitch image', B: 'Template image', C: 'No image', D: 'Audit', M: 'Mockup' };
 const stLabel = st => /REPL/.test(st) ? ['Replied', 'c-green'] : /BOUNC|FAIL|ERROR/.test(st) ? ['Bounced', 'c-amber'] : /CLICK/.test(st) ? ['Clicked', 'c-blue']
   : /OPEN/.test(st) ? ['Opened', 'c-blue'] : /SENDING/.test(st) ? ['Sending', 'c-gray'] : /SENT/.test(st) ? ['Sent', 'c-gray'] : ['Queued', 'c-gray'];
 const nth = n => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
@@ -379,11 +379,11 @@ function render() {
   // A/B/C
   // D (audit) vs B (template) is the live test; A and C are retired and only show when the range has them
   const stat = (key, g) => { const s = g.filter(eSent); return { v: key, q: g.length, s: s.length, o: s.filter(eOpened).length, r: s.filter(eReplied).length, b: new Set(g.filter(e => booked(e.l)).map(e => e.l['Contact email'])).size }; };
-  const rows = ['D', 'B', 'A', 'C'].filter(v => ['D', 'B'].includes(v) || E.some(e => e.v === v)).map(v => stat(v, E.filter(e => e.v === v)));
+  const rows = ['D', 'M', 'B', 'A', 'C'].filter(v => ['D', 'M'].includes(v) || E.some(e => e.v === v)).map(v => stat(v, E.filter(e => e.v === v)));
   const maxN = Math.max(1, ...E.map(e => e.n));
   const stepRows = [...Array(maxN)].map((_, i) => stat('#' + (i + 1), E.filter(e => e.n === i + 1)));
   const best = Math.max(...rows.map(r => r.s ? r.r / r.s : 0));
-  const label = { D: 'D · Audit email', B: 'B · Template image', A: 'A · Pitch image (retired)', C: 'C · No image (retired)' };
+  const label = { D: 'D · Audit (email #1)', M: 'M · Mockup (email #2)', B: 'B · Template image (fallback)', A: 'A · Pitch image (retired)', C: 'C · No image (retired)' };
   const row = (name, r, best) => `<tr><td>${name}</td><td class="num">${r.q}</td><td class="num">${r.s}</td><td class="num hide-sm">${pct(r.o, r.s)}</td><td class="num">${r.r}</td><td class="num ${best && r.s && r.r / r.s === best ? 'best' : ''}">${pct(r.r, r.s)}</td><td class="num">${r.b}</td></tr>`;
   const headRow = first => `<tr><th>${first}</th><th class="num">Queued</th><th class="num">Delivered</th><th class="num hide-sm">Opened</th><th class="num">Replied</th><th class="num">Reply rate</th><th class="num">Booked</th></tr>`;
   $('steps').innerHTML = headRow('Email') + stepRows.map(r => row(nth(+r.v.slice(1)) + ' email' + (r.v === '#1' ? ' (first touch)' : ''), r)).join('');
