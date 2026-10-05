@@ -49,6 +49,10 @@ h2 .count{font-size:13px;font-weight:600;color:var(--ink2);background:rgba(0,0,0
 .kpi .l{color:var(--ink2);font-size:13px}
 .kpi .s{color:var(--ink3);font-size:12px;margin-top:2px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fold{cursor:pointer;user-select:none}
+.fold .caret{color:var(--ink3);font-size:14px;transition:transform .2s}
+.fold[aria-expanded="true"] .caret{transform:rotate(90deg)}
+.panel.folded{max-height:0;padding:0}
 .panel{background:var(--card);border-radius:18px;padding:6px 0;overflow:hidden}
 .panel .empty{padding:22px 20px;color:var(--ink3)}
 .item{display:flex;gap:14px;align-items:flex-start;padding:14px 20px;border-top:1px solid var(--line)}
@@ -180,7 +184,7 @@ td select{height:30px;border:1px solid var(--line);border-radius:8px;background:
 
     <div class="grid2">
       <div><h2>Call these <span class="count" id="nReplied">0</span></h2><div class="panel" id="replied"></div></div>
-      <div><h2>Follow up <span class="count" id="nFollow">0</span></h2><div class="panel" id="follow"></div></div>
+      <div><h2 class="fold" id="followHead" role="button" tabindex="0" aria-expanded="false" aria-controls="follow">Follow up <span class="count" id="nFollow">0</span><span class="caret">▸</span></h2><div class="panel folded" id="follow"></div></div>
     </div>
     <div class="grid2">
       <div><h2>Booked calls <span class="count" id="nBooked">0</span></h2><div class="panel" id="booked"></div></div>
@@ -524,6 +528,14 @@ document.addEventListener('submit', async e => {
   catch (err) { toast('Could not save the note.'); f.querySelector('button').disabled = false; }
 });
 $('logout').addEventListener('click', logout);
+// Follow up list: collapsed by default (it gets long); remembers your choice on this browser
+function setFold(open) {
+  $('followHead').setAttribute('aria-expanded', open); $('follow').classList.toggle('folded', !open);
+  try { localStorage.setItem('fs_follow_open', open ? '1' : '0'); } catch {}
+}
+try { setFold(localStorage.getItem('fs_follow_open') === '1'); } catch { setFold(false); }
+$('followHead').addEventListener('click', () => setFold($('follow').classList.contains('folded')));
+$('followHead').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFold($('follow').classList.contains('folded')); } });
 ['rng', 'rngFrom', 'rngTo'].forEach(id => $(id).addEventListener('change', setRange));
 try { const r = JSON.parse(localStorage.getItem('fs_range') || 'null'); if (r && [...$('rng').options].some(o => o.value === r.k)) { $('rng').value = r.k; $('rngFrom').value = r.f || ''; $('rngTo').value = r.t || ''; } } catch {}
 setRange();
